@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="202" height="28" viewBox="0 0 202 28" role="img" aria-label="PLAYS IN THE BROWSER">
+  <rect x="0.5" y="0.5" width="201" height="27" rx="3" fill="#0b0b0d" stroke="#9cff35"/>
+  <rect x="0.5" y="24" width="201" height="3.5" fill="#9cff35"/>
+  <text x="101.0" y="17" fill="#9cff35" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="700" letter-spacing="1" text-anchor="middle">PLAYS IN THE BROWSER</text>
+</svg>

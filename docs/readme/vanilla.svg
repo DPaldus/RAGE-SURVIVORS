@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="112" height="28" viewBox="0 0 112 28" role="img" aria-label="VANILLA JS">
+  <rect x="0.5" y="0.5" width="111" height="27" rx="3" fill="#0b0b0d" stroke="#9cff35"/>
+  <rect x="0.5" y="24" width="111" height="3.5" fill="#9cff35"/>
+  <text x="56.0" y="17" fill="#9cff35" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="700" letter-spacing="1" text-anchor="middle">VANILLA JS</text>
+</svg>
