@@ -30,6 +30,12 @@
   //          NORMAL from 8:00 to 10:00: +15% spawns and +10% enemies alive (2026-10-26, playtest: the deck felt empty
   //          from 8:00). Attack warnings keep their own cap (TIMELINE.attackCap), so the extra bodies add crowd, not
   //          more floor to dodge, and HP / damage stay as they were
+  //   threat                    x the size of every THREAT LV step (data/timeline.js D.THREAT, one every 4:00). NIGHT and
+  //          STORM start with a tougher crowd (STORM bot runs died between 11:00 and 18:00 with bigger steps), so their
+  //          steps are 25% / 50% smaller and the three maps keep their gaps instead of drifting apart late. NORMAL's
+  //          `ease` XP bonus went 1.3 -> 1.15 (2026-10-27: LV 98 at 30:00)
+  //   xp                        x the XP every kill drops (NIGHT 0.96, STORM 0.94): their denser crowds bring more kills,
+  //          and bot runs there reached LV 90-98 at 30:00 like NORMAL; the reward for them is the cash multiplier
   //   itemPower                 x every passive item's level (Player.recalc; MR.SCHMUNK's ability stacks on top)
   //   labelFight / labelSpd     THE MAJOR LABEL's fight length (s of your damage, 150 elsewhere) and its top speed as a
   //          share of the cap elsewhere. NORMAL (2026-10-26): bot runs with half or all perks walked through 30:00
@@ -39,20 +45,20 @@
       id: 'normal', name: 'NORMAL', cash: 1, diff: 1, col: '#9cff35', tagline: 'LIGHTS ON',
       desc: 'Parking Deck B2 as you know it. Baseline crowd, baseline pay. Your items hit 20% harder here.',
       hp: 1, dmg: 1, rate: 1, cap: 1, eliteGap: 1, bossHp: 0.8, dark: 0, itemPower: 1.2, labelFight: 80, labelSpd: 0.9,
-      ease: { from: 4, to: 5, hp: 0.82, rate: 0.85, cap: 0.85, dmg: 0.82, xp: 1.3 },
+      ease: { from: 4, to: 5, hp: 0.82, rate: 0.85, cap: 0.85, dmg: 0.82, xp: 1.15 }, threat: 1,
       push: { from: 8, to: 10, rate: 1.15, cap: 1.1 },
     },
     night: {
       id: 'night', name: 'NIGHT', cash: 2, diff: 2, col: '#7fb2ff', tagline: 'LIGHTS OUT',
       desc: 'Same deck after closing. Only the aisle lights and your own glow. Tougher crowd, double pay.',
       hp: 1.3, dmg: 1.15, rate: 1.12, cap: 1.1, eliteGap: 0.92, bossHp: 1.1,
-      dark: 0.62, tint: '6,10,28', ambTint: [0.8, 0.92, 1.3], heroLight: 400, after: 'normal',
+      dark: 0.62, tint: '6,10,28', ambTint: [0.8, 0.92, 1.3], heroLight: 400, after: 'normal', threat: 0.75, xp: 0.96,
     },
     storm: {
       id: 'storm', name: 'STORM', cash: 3, diff: 3, col: '#c9a8ff', tagline: 'RAIN ON THE RAMP',
       desc: 'Night, rain blowing in, lightning over the deck. The hardest crowd, triple pay.',
       hp: 1.6, dmg: 1.3, rate: 1.25, cap: 1.2, eliteGap: 0.85, bossHp: 1.2,
-      dark: 0.66, tint: '5,8,24', ambTint: [0.76, 0.88, 1.32], heroLight: 380, rain: true, lightning: true, after: 'night',
+      dark: 0.66, tint: '5,8,24', ambTint: [0.76, 0.88, 1.32], heroLight: 380, rain: true, lightning: true, after: 'night', threat: 0.5, xp: 0.94,
     },
   };
   // the map mode's mid-run relief and late push for one multiplier (k = hp / rate / cap / dmg / xp), 1 where neither applies

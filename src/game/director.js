@@ -28,6 +28,7 @@
       this.lastEvents = [];
       this.seenTypes = new Set(['npc']);
       this.set = null; this.setIds = null; this.setT = 0; this.base = 'npc'; this.intro = new Map(); // enemy lineup
+      this.threatN = 0; // THREAT LV called out so far (data/timeline.js)
       // short tips for the first few runs
       // three, spaced out, never while a crowd is in your face (see update)
       this.tips = RS.Save.data.runs <= 3 ? [
@@ -37,12 +38,13 @@
       ] : [];
     },
     minutes(G) { return G.time / 60; },
-    hpMul(G) {
+    hpMul(G, noThreat) { // noThreat: a boss's summoned adds (the boss fight is sized from your DPS, not the clock)
       const t = G.time;
       let m = D.curve(TL.hp, t / 60) * G.arenaDef.hpMul * (G.mods.nomercy ? 1.6 : 1) * (G.mapMode ? G.mapMode.hp : 1);
       if (t > D.RUN_LENGTH) m *= 1 + (t - D.RUN_LENGTH) / 160; // past 30:00, while THE MAJOR LABEL still stands
       if (G.p && G.p.s.difficulty) m *= 1 + G.p.s.difficulty; // DEMON TAX / CURSED UP (stash)
       m *= D.mapEase(G, 'hp'); // NORMAL from 5:00 (data/arenas.js)
+      if (!noThreat) m *= D.threat(G, 'hp'); // THREAT LV, a step every 4:00 (data/timeline.js)
       return m;
     },
     tierFor(G) {
@@ -181,15 +183,17 @@
       // ----- numbered waves (data/timeline.js): a new one every minute, the last seconds of each bring nobody new
       const wn = D.waveAt(t);
       if (wn !== G.waveNo) { G.waveNo = wn; if (wn > 1) G.sfx('chestTick'); }
+      const tn = Math.floor(m / D.THREAT.every);
+      if (tn > this.threatN) { this.threatN = tn; FX.banner('THREAT LV ' + tn, 'the crowd hits harder', '#ff2448', 2.2, true); }
       const rest = D.waveRest(t);
       if (rest) { this.acc = 0; this.updateCypher(G, dt); this.updateSupply(G, dt); RS.Trip.update(G, dt); return; }
       // ----- regular spawns (rates, caps and HP all come from D.TIMELINE)
       const MM = G.mapMode || D.MAPMODES.normal;
-      let rate = D.curve(TL.rate, m) * MM.rate * (1 + 0.7 * (G.p.s.difficulty || 0)) * D.mapEase(G, 'rate');
+      let rate = D.curve(TL.rate, m) * MM.rate * (1 + 0.7 * (G.p.s.difficulty || 0)) * D.mapEase(G, 'rate') * D.threat(G, 'rate');
       if (G.bosses.length) rate *= 0.45;
       if (this.rushT > 0) { this.rushT -= dt; rate *= 2.2; }
       if (t > D.RUN_LENGTH) rate *= 1 + (t - D.RUN_LENGTH) / 600; // past 30:00
-      const maxAlive = Math.min(560, D.curve(TL.maxAlive, m) * MM.cap * D.mapEase(G, 'cap'));
+      const maxAlive = Math.min(560, D.curve(TL.maxAlive, m) * MM.cap * D.mapEase(G, 'cap') * D.threat(G, 'cap'));
       this.acc += rate * dt;
       let guard = 0;
       while (this.acc >= 1 && guard++ < 20) {

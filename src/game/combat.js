@@ -7,6 +7,7 @@
   const NOTEMP = { dmg: 1, cd: 1, area: 1, amount: 0 };
   const NOMOD = { dmg: 1, cd: 1, area: 1, amount: 0, pierce: 0, bounce: 0, chains: 0, reach: 1, dur: 1, crit: 0 };
   const TMP = [];
+  const ZONE_CAP = 10; // lasting zones one weapon may have on the floor at once (Game.zone)
   // PRODUCER TAG shouts (fictional producers; DPLDS made this game)
   // kill-count milestones, announced as follower counts
   const FOLLOW = [[100, '100 FOLLOWERS', 'MOM FOLLOWED TOO'], [1000, '1K FOLLOWERS', 'BUYING A RING LIGHT'], [5000, '5K FOLLOWERS', 'FAN PAGES STARTED'],
@@ -116,9 +117,9 @@
     },
     giveRandomWeapon(level) {
       const p = this.p;
-      const pool = RS.Progression.weaponPool(p).filter((id) => !p.hasWeapon(id));
+      const P = RS.Progression, pool = P.weaponPool(p).filter((id) => !p.hasWeapon(id) && !p.banished.has(id));
       if (!pool.length || p.weapons.length >= p.maxWeapons) return;
-      const w = p.addWeapon(U.pick(pool));
+      const w = p.addWeapon(U.weighted(pool, (id) => P.freshness(id))); // FEATURE VERSE: same run-to-run variety as the offers
       this.levelWeapon(w, (level || 1) - 1);
     },
 
@@ -183,7 +184,7 @@
       // feedback
       const col = mega ? '#d58cff' : crit ? '#ffe14a' : o.color || (o.sonic ? '#d6ffb0' : '#ffffff');
       if (crit) FX.text(e.x, e.y - e.r - 6, (mega ? 'MEGA ' : '') + (dmg < 10 ? (Math.round(dmg * 10) / 10).toString().replace(/\.0$/, '') : Math.round(dmg)), col, mega ? 20 : 17, { crit });
-      else if (!o.quiet || FX.texts.count < 45) FX.dmgText(e, dmg, col, 12); // DoT / proc numbers thin out in a busy fight
+      else if (!o.quiet || FX.numN < 4) FX.dmgText(e, dmg, col, 12); // DoT / proc ticks only show while the fight is quiet
       if (crit) {
         this.sfx('crit');
         if (p.stashH.crit.length) RS.Stash.onCrit(this, p, e, dmg);
@@ -213,7 +214,10 @@
       if (o.ring) { FX.ring(x, y, r, o.ring, 0.32, 4, o.fill || 0); }
       // fireball drawn in code (boom: true = fire, 'boom_gold' / 'boom_toxic' pick the palette); a blast over the
       // explosion budget (FX.boom) skips its sparks, light and shake as well
-      if (o.boom && FX.boom(x, y, r, o.boom === 'boom_gold' ? 'gold' : o.boom === 'boom_toxic' ? 'toxic' : 'fire')) {
+      // a weapon's blast (o.w) always goes through the budget, however big its area bonuses made it: the "huge blasts
+      // always show" rule is for boss slams and arena hazards (a late RAGE ROCKET at r 180 set off ~5 screen-filling
+      // fireballs a second over the hero, 2026-10-27)
+      if (o.boom && FX.boom(x, y, r, o.boom === 'boom_gold' ? 'gold' : o.boom === 'boom_toxic' ? 'toxic' : 'fire', !!o.w)) {
         FX.sparks(x, y, 0, 10, '#ffd27a', 520, Math.PI);
         this.lightsFrame.push({ x, y, r: r * 2.2, t: 0.25 });
         FX.shake(0.08, 0.3);
@@ -248,6 +252,8 @@
         if (e.elite || e.def.isElite) xp *= 1 + p.s.eliteBonus;
         if (p.s.difficulty) xp *= 1 + p.s.difficulty; // DEMON TAX pays back in XP
         xp *= D.mapEase(this, 'xp'); // NORMAL from 5:00: faster level-ups
+        xp /= Math.sqrt(D.threat(this, 'rate')); // THREAT LV: the denser crowd pays only part of its extra bodies in XP
+        if (this.mapMode && this.mapMode.xp) xp *= this.mapMode.xp; // NIGHT / STORM: more bodies, a bit less XP each
         this.dropXp(e.x, e.y, xp);
         this.rollDrops(e);
       }
@@ -372,7 +378,7 @@
       if (ps && ps.tagEvery && pr.w && !pr.child && !pr.src && pr.dmg > 0 && ++this.tagN >= ps.tagEvery) {
         this.tagN = 0;
         pr.dmg *= 3; pr.r *= 1.35; pr.col = '#ffd23f'; pr.hitsLeft += ps.tagPierce; pr.crit = 1; // a tagged shot always crits
-        if (this.time - this.tagT > 4) { this.tagT = this.time; FX.text(this.p.x, this.p.y - 48, U.pick(TAGS), '#ffd23f', 12, { always: true, life: 1.2 }); }
+        if (this.time - this.tagT > 10) { this.tagT = this.time; FX.text(this.p.x, this.p.y - 48, U.pick(TAGS), '#ffd23f', 12, { always: true, life: 1.2 }); }
       }
       // auto-targeted shot: reserve its damage on the target so the next shots pick someone not already doomed
       pr.aim = o.aim || null; pr.pend = 0;
@@ -541,6 +547,14 @@
 
     // ------------------------------------------------------------ zones
     zone(o) {
+      // lasting zones (pits, fogs, fields: 1.5 s+) are capped per weapon: a new one past ZONE_CAP sends the oldest into
+      // a quick fade. A maxed MOSH PIT with 24 MODS (+3 pits, x2 duration, 0.9 s cooldown) kept 100+ pits alive at once
+      // and their fills merged into one red-pink sheet over the whole screen (2026-10-27)
+      if (o.w && (o.life || 1) >= 1.5) {
+        let n = 0, old = null;
+        for (const q of this.zones.list) if (!q.dead && q.w === o.w && q.max >= 1.5 && q.life > 0.3) { n++; if (!old || q.age > old.age) old = q; }
+        if (n >= ZONE_CAP && old) old.life = Math.min(old.life, 0.3);
+      }
       const z = this.zones.spawn();
       z.kind = o.kind; z.x = o.x; z.y = o.y; z.r = o.r || 50; z.maxR = o.maxR || z.r;
       z.life = o.life || 1; z.max = z.life; z.age = 0;

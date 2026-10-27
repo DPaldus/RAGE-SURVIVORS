@@ -32,6 +32,7 @@
       },
       discovered: { weapons: [], items: [], evos: [], thumbs: [], enemies: [], bosses: [], synergies: [], stash: [] },
       challenges: [],
+      recentWeapons: [],         // the weapons you took in your last few runs (lists of base ids, newest first): Progression offers them a bit less
       eggs: [],                  // easter eggs found (src/ui/eggs.js), each pays out once
       selected: { char: 'twizzy', arena: 'garage', mode: 'standard', map: 'normal', mods: [], cos: {}, startWeapon: {} }, // map: D.MAPMODES id
       settings: {

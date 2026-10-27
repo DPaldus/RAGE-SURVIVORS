@@ -50,6 +50,9 @@ The look is 2021 rage aesthetic (matte black, candy red, toxic green) drawn as c
 
 - **30 waves:** the HUD counts WAVE 7/30 next to the timer and calls out every new wave, with a BOSS WAVE every fifth
   one. The last 3 seconds of each wave bring nobody new, a short breather before the next.
+- **THREAT LV:** every 4 minutes the crowd steps up: tougher, harder-hitting, a little faster and more of it at once.
+  The early steps are gentle, the last ones from 20:00 are where a strong build gets tested. NIGHT and STORM, which
+  start harder, climb a little less.
 - **4 bosses:** THE INDUSTRY PLANT, THE ALGORITHM, THE RAGE KING and THE MAJOR LABEL. Beating THE RAGE KING unlocks
   the **NO MERCY** stage.
 - **19 weapons and 19 evolutions:** max a weapon, hold the matching passive item and open a chest to evolve it.
@@ -109,7 +112,7 @@ fonts. Your progress lives in the browser's local storage. To start over, use *S
 | Character ability | F / Q / Shift | B / X |
 | Open a chest / deal with THE PLUG | E | X |
 | Pause | Esc / P | Start |
-| Pick a level-up card | mouse or 1–4 | — |
+| Pick a level-up card | mouse, 1–4, or A / D (← / →) to select and E to take | — |
 | Reroll / banish a card | R / B | — |
 
 ## ▶ Project structure

@@ -42,7 +42,9 @@
     eventGap: [[0, 85], [10, 80], [20, 70], [30, 60]], // seconds between arena events
     // XP gem value multiplier on top of D.LOOT.xpMul: the first minutes level you much faster (playtest: from 5:00 the
     // build was too thin), from 15:00 it is the old rate again (a flat boost let late builds snowball into easy wins)
-    xp: [[0, 1.45], [6, 1.45], [10, 1.15], [15, 1], [30, 1]],
+    // 2026-10-27: from 14:00 it keeps falling, to 0.62 at 30:00 (NORMAL with all perks reached LV 98 at 30:00; bot runs
+    // now end around LV 75-86). Until 14:00 unchanged: a thinner mid-run build ended STORM test runs at 11-13:00
+    xp: [[0, 1.45], [6, 1.45], [10, 1.15], [14, 1], [20, 0.78], [30, 0.62]],
     // how many regular enemy types share the map at once (the director's lineup rotates every 60-80 s; it used to be
     // every type unlocked so far: 10 at 5:00, 13 from 7:30)
     types: [[0, 2], [1, 3], [2.5, 4], [12, 4], [18, 5], [30, 5]],
@@ -99,6 +101,35 @@
     { t: 1500, id: 'king', mul: 1 }, // major boss: defeating it unlocks the NO MERCY stage for good
     { t: 1800, id: 'label', mul: 1, final: true }, // the run ender
   ];
+
+  // THREAT: every `every` minutes the whole regular crowd steps up on top of the curves above (THREAT LV 1 at 4:00, 2 at
+  // 8:00 … 7 at 28:00, called out with a banner). A step fades in over `fade` minutes, so it is felt without a wall.
+  // Each table is the multiplier at THREAT LV 0-7 for enemy HP, the damage their hits and shots deal, spawns per second,
+  // enemies alive at once and walk speed. The early steps are small (a run without perks already ends around 11-14:00),
+  // the late ones carry the weight: bot runs with all perks on every map and stage took no damage at all from 14:00 to
+  // 30:00, the crowd melted as it spawned (2026-10-27). Each map scales the steps by MAPMODES[].threat (NIGHT / STORM
+  // start harder, so they climb a bit less). Bosses size their HP from your DPS and are left out.
+  D.THREAT = {
+    every: 4, fade: 0.5,
+    hp: [1, 1.03, 1.07, 1.18, 1.5, 2.2, 3.4, 5.0],
+    dmg: [1, 1.02, 1.04, 1.08, 1.2, 1.36, 1.56, 1.78],
+    rate: [1, 1.02, 1.04, 1.08, 1.16, 1.26, 1.36, 1.45],
+    cap: [1, 1.02, 1.04, 1.08, 1.16, 1.26, 1.36, 1.45],
+    spd: [1, 1, 1, 1.01, 1.03, 1.06, 1.1, 1.15],
+  };
+  // the THREAT level at minute m as a fraction (2.5 = halfway into the third step)
+  D.threatLevel = (m) => {
+    const T = D.THREAT, n = Math.floor(Math.min(m, D.RUN_LENGTH / 60) / T.every);
+    return n < 1 ? 0 : n - 1 + Math.min(1, (m - n * T.every) / T.fade);
+  };
+  // the THREAT multiplier for one stat (k = hp / dmg / rate / cap / spd) right now. While a boss is up the crowd that
+  // keeps coming is one THREAT LV lower (bot runs died within 10 s of THE RAGE KING at 25:00 with the full step on top)
+  D.threat = (G, k) => {
+    const M = G.mapMode, s = M && M.threat !== undefined ? M.threat : 1, T = D.THREAT[k], top = T.length - 1;
+    const L = Math.max(0, Math.min(top, D.threatLevel(G.time / 60)) - (G.bosses && G.bosses.length ? 1 : 0));
+    const i = Math.floor(L), v = T[i] + (T[Math.min(top, i + 1)] - T[i]) * (L - i);
+    return 1 + (v - 1) * s;
+  };
 
   // linear interpolation of a keyframe curve at minute m
   D.curve = (keys, m) => {

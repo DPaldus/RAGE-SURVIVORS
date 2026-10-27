@@ -18,7 +18,13 @@
     weaponSlots: 3, tapeSlots: 2, passiveSlots: 6,
     tapeMax: 10,
     perCard: 1,            // cards for one weapon in an offer (or in THE PLUG): one, never a GLOCK next to a GLOCK
-    focusLevels: 6,        // a new weapon's upgrades come up twice as often, fading over this many levels
+    focusLevels: 6,        // a new weapon's upgrades come up twice as often, fading over this many levels (not the starter)
+    // run-to-run variety (2026-10-27 audit: the new-weapon roll was already even, 6-8% each, but the same few guns kept
+    // coming back): a weapon you took in one of your last `recentRuns` runs is offered x(1 - recentCut) per such run
+    recentRuns: 3, recentCut: 0.15,
+    // a maxed weapon's MOD cards (two per weapon): was 3.5, which made the starter GLOCK ~31% of all weapon cards
+    maxedModWeight: 2.4,
+    starterWeight: 0.7, // x the starter gun's level / MOD cards once you hold 3+ weapons
     tapeSynLevel: 3,       // a TAPE counts for synergies (and resonance) from this level
   };
 

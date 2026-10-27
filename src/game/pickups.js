@@ -3,11 +3,13 @@
 (function (RS) {
   const U = RS.U, FX = RS.FX, D = RS.Data;
   const CHEST_REACH = 64; // world px from the hero within which E opens a chest
+  // XP stays toxic green at every size (bigger = brighter lime). The top tiers used to be near-white and white, and a
+  // late floor of 200+ of them glowing read as sparkles / notifications all over the fight (2026-10-27 UI pass)
   const GEM_TIERS = [
-    { max: 2.5, col: '#9cff35', r: 5 },
-    { max: 9, col: '#c8ff7d', r: 6.5 },
-    { max: 30, col: '#e9ffcf', r: 8 },
-    { max: 1e9, col: '#ffffff', r: 10 },
+    { max: 2.5, col: '#7fdc2a', r: 5 },
+    { max: 9, col: '#9cff35', r: 6.5 },
+    { max: 30, col: '#c4ff5a', r: 8 },
+    { max: 1e9, col: '#e4ff7a', r: 10 },
   ];
 
   Object.assign(RS.Game, {

@@ -111,7 +111,16 @@
       return 1 + 0.45 * Math.min(1.5, a);
     },
     // a weapon you just picked up comes up twice as often for a few levels (D.BUILD.focusLevels)
-    focus(p, w) { return 1 + Math.max(0, 1 - (p.level - (w.gotLevel || 0)) / D.BUILD.focusLevels); },
+    // (not the starting gun: it is not a fresh pick, and with the boost it filled the first offers of every run)
+    focus(p, w) { return w.starter ? 1 : 1 + Math.max(0, 1 - (p.level - (w.gotLevel || 0)) / D.BUILD.focusLevels); },
+    // run-to-run variety: a weapon you took in your last few runs comes up a bit less (D.BUILD.recentRuns / recentCut)
+    freshness(id) {
+      const runs = RS.Save.data.recentWeapons;
+      if (!Array.isArray(runs)) return 1;
+      let n = 0;
+      for (const r of runs.slice(0, D.BUILD.recentRuns)) if (Array.isArray(r) && r.includes(id)) n++;
+      return 1 - D.BUILD.recentCut * n;
+    },
     // every card the offer can draw from, with its weight. per: cards per weapon already in this offer (+ __new)
     candidates(G, used, per, rar) {
       const p = G.p, B = D.BUILD, cands = [];
@@ -122,14 +131,16 @@
       for (const w of p.weapons) {
         const id = w.def.id;
         if ((per[id] || 0) >= B.perCard) continue;
-        const f = this.focus(p, w), maxed = w.def.evolved || w.level >= w.def.max;
+        // the starter gun steps back a little once there are three guns: it is in every run, so its cards were ~31% of
+        // all weapon cards (2026-10-27 audit), the main reason GLOCK felt like it was everywhere
+        const f = this.focus(p, w) * (w.starter && p.weapons.length >= 3 ? B.starterWeight : 1), maxed = w.def.evolved || w.level >= w.def.max;
         if (!maxed) cands.push({ kind: 'weapon_up', id, key: id, wid: id, w, weight: 4.5 * f });
         const mods = D.WEAPON_MODS.filter((m) => m.ok(w.def, w) && (!m.minR || rar >= m.minR) && !p.banished.has('mod:' + id + ':' + m.id));
         for (let k = 0; k < 2 && mods.length; k++) {
           const m = U.weighted(mods, (x) => x.w);
           mods.splice(mods.indexOf(m), 1);
           const key = 'mod:' + id + ':' + m.id;
-          cands.push({ kind: 'weapon_mod', id: key, key, wid: id, w, mod: m, weight: (maxed ? 3.5 : 1.2) * f });
+          cands.push({ kind: 'weapon_mod', id: key, key, wid: id, w, mod: m, weight: (maxed ? B.maxedModWeight : 1.2) * f });
         }
       }
       // new weapons: only with a free slot, rarer the fuller the slots get, one per offer
@@ -138,7 +149,7 @@
         for (const id of this.weaponPool()) {
           if (p.hasWeapon(id) || p.banished.has(id)) continue;
           const def = D.WEAPONS[id];
-          cands.push({ kind: 'weapon_new', id, key: id, wid: id, weight: 1.15 * (0.4 + 0.6 * free) * (weaponsWanting.has(def.evoWith) ? 1.6 : 1.0) * this.affinity(p, id) });
+          cands.push({ kind: 'weapon_new', id, key: id, wid: id, weight: 1.15 * (0.4 + 0.6 * free) * (weaponsWanting.has(def.evoWith) ? 1.6 : 1.0) * this.affinity(p, id) * this.freshness(id) });
         }
       }
       for (const it of p.passives) {

@@ -213,7 +213,10 @@
         // the older curves reached 15 there, or 26 before that, with level-ups in bursts)
         const L = this.level - 1;
         // 30-minute run: lv ~17 at 5:00 and ~33 at 10:00 with the early XP boost (D.TIMELINE.xp); was 15.7 / 31.7
-        this.xpNext = Math.round(10 + 8 * L + 1.4 * L * L);
+        // from LV 30 each level costs a bit more on top (+15% at LV 60, +39% at LV 80): bot runs with all perks reached
+        // LV 83-101 at 30:00 on NORMAL with the crowd melting on arrival (2026-10-27)
+        const late = Math.max(0, L - 30);
+        this.xpNext = Math.round(10 + 8 * L + 1.4 * L * L + 0.03 * late * late * late);
         G.stats.maxLevel = this.level;
         // every level-up patches you up a little (8% max HP): runs died "worn down" by chip hits with nothing to heal
         // them, so keeping up the kill pace now keeps you alive (~25-35 HP a minute at 5:00-9:00)

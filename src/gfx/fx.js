@@ -2,8 +2,11 @@
 // Particles, damage numbers, rings, lightning arcs, screen shake / flash / glitch, banners.
 (function (RS) {
   const U = RS.U;
+  const NUM_CAP = 12, CRIT_CAP = 18, CALL_CAP = 3; // floating text budgets (FX.text)
+  const BANNER_CAP = 2; // banners on screen at once (FX.banner)
 
   const FX = {
+    numN: 0, // damage numbers alive (counted in update)
     parts: new RS.Pool(() => ({})),
     texts: new RS.Pool(() => ({})),
     rings: new RS.Pool(() => ({})),
@@ -15,7 +18,7 @@
     banners: [],
     reset() {
       this.parts.clear(); this.texts.clear(); this.rings.clear(); this.arcs.length = 0;
-      this.trauma = 0; this.flashA = 0; this.hurtA = 0; this.glitchT = 0; this.banners.length = 0;
+      this.trauma = 0; this.flashA = 0; this.hurtA = 0; this.glitchT = 0; this.banners.length = 0; this.numN = 0;
     },
     settings() { return RS.Save.s; },
 
@@ -172,14 +175,19 @@
     // their damage, they just skip the sprite (Game.aoe then skips its sparks and shake too); only the huge ones
     // (r >= 150: boss slams, exploding speakers) always show.
     boomTok: 4,
-    boom(x, y, r, pal) {
-      if (r < 150) { if (this.boomTok < 1) return null; this.boomTok--; }
+    // budgeted: true = a player weapon's blast, which always spends the budget (only hazards / boss slams skip it)
+    boom(x, y, r, pal, budgeted) {
+      if (r < 150 || budgeted) {
+        const cost = budgeted && r >= 120 ? 2 : 1; // a big weapon blast counts double: ~1.5 screen-sized fireballs a second at most
+        if (this.boomTok < cost) return null;
+        this.boomTok -= cost;
+      }
       const p = this.one('boom', x, y, 0, 0, 0.62, '#ffffff', r);
       p.drag = 0; p.pal = this.BOOM_PAL[pal] || this.BOOM_PAL.fire; p.seed = Math.random() * 1000;
       // chain: blasts bigger than a hand grenade pop 2-3 extra smaller puffs around the first, slightly later
       const h = U.hash, sd = p.seed, n = r > 110 ? 3 : r > 55 ? 2 : 0;
       p.subs = [{ dx: 0, dy: 0, s: 1, d: 0 }];
-      for (let i = 0; i < n; i++) { const a = h(sd + i) * U.TAU; p.subs.push({ dx: Math.cos(a) * r * 0.5, dy: Math.sin(a) * r * 0.42, s: 0.55, d: 0.06 + i * 0.05 }); }
+      for (let i = 0; i < n; i++) { const a = h(sd + i) * U.TAU; p.subs.push({ dx: Math.cos(a) * r * 0.4, dy: Math.sin(a) * r * 0.34, s: 0.5, d: 0.06 + i * 0.05 }); }
       return p;
     },
     drawBoom(ctx, p, t) {
@@ -192,7 +200,9 @@
         if (lt < 0) continue;
         const f = Math.floor(lt * this.BOOM_FPS);
         if (f >= N) continue;
-        const px = Math.max(1, Math.round((r * s.s) / 16)), size = S * px; // integer pixel size: sharp squares
+        // integer pixel size: sharp squares. The sprite spans ~2x the blast radius (it was 2.5x, and with the chained
+        // puffs a big blast painted ~3.5x its real area over the hero and the crowd)
+        const px = Math.max(1, Math.round((r * s.s) / 20)), size = S * px;
         const cx = Math.round(x + s.dx), cy = Math.round(y + s.dy - lt * r * 0.18); // the puff drifts up a touch
         ctx.drawImage(strip, f * S, 0, S, S, cx - size / 2, cy - size / 2, size, size);
       }
@@ -385,12 +395,25 @@
       const filter = RS.FXS.ready ? RS.FXS.filterFor(tex === 'aux' ? '#9cff35' : '#ff2448', col) : '';
       this.arcs.push({ pts: points, col, life: life || 0.14, max: life || 0.14, w: width || 2, tex, filter, seed: Math.random() });
     },
+    // Floating text has two budgets (2026-10-27 UI pass: 40+ numbers and stacked callouts covered the fight):
+    //  - damage numbers: at most NUM_CAP alive, crits get a little extra room (CRIT_CAP), the rest are dropped; they
+    //    rise and fade in 0.55 s
+    //  - callouts (`always`: DODGE, heals, item procs, boss lines): never the same text twice at once and at most
+    //    CALL_CAP alive; the hero's own damage taken ("-12") always shows
     text(x, y, str, col, size, opts) {
-      if (!this.settings().dmgNumbers && !(opts && opts.always)) return;
-      if (this.texts.count > 90 && !(opts && opts.always)) return;
+      const always = !!(opts && opts.always), crit = !!(opts && opts.crit);
+      if (!always) {
+        if (!this.settings().dmgNumbers) return;
+        if (this.numN >= (crit ? CRIT_CAP : NUM_CAP)) return;
+      } else if (!(typeof str === 'string' && str[0] === '-')) {
+        let n = 0;
+        for (const o of this.texts.list) if (!o.dead && o.call) { if (o.str === str) return; n++; }
+        if (n >= CALL_CAP) return;
+      }
       const t = this.texts.spawn();
-      t.x = x + U.rand(-6, 6); t.y = y - 10; t.vy = -60 - (opts && opts.crit ? 30 : 0); t.str = str; t.col = col; t.size = size || 14;
-      t.life = t.max = (opts && opts.life) || 0.7; t.crit = !!(opts && opts.crit); t.owner = 0; t.val = 0;
+      t.x = x + U.rand(-6, 6); t.y = y - 10; t.vy = -60 - (crit ? 30 : 0); t.str = str; t.col = col; t.size = size || 14;
+      t.life = t.max = (opts && opts.life) || (always ? 0.7 : 0.55); t.crit = crit; t.owner = 0; t.val = 0; t.call = always;
+      if (!always) this.numN++;
       return t;
     },
     // damage number that merges: a hit on the same enemy within 0.2 s adds to the number already rising from it
@@ -414,10 +437,19 @@
     },
     glitch(t) { if (this.settings().screenFx && !this.settings().reduceFlash) this.glitchT = Math.max(this.glitchT, t); },
     // big banners for bosses / evolutions; anything shown for less than 2.5s renders smaller
+    // At most BANNER_CAP at once, never the same title twice, and a minor (small) banner waits for nothing: it is
+    // dropped while a big one (boss, evolution, synergy, wave milestone) has the screen, since minor ones (THREAT LV,
+    // CYPHER, follower milestones...) also have their own pointer, label or HUD readout
     banner(title, sub, col, dur, small) {
       dur = dur || 2.6;
-      this.banners.push({ title, sub: sub || '', col: col || '#ff2448', t: 0, dur, small: small !== undefined ? small : dur < 2.5 });
-      if (this.banners.length > 3) this.banners.shift();
+      small = small !== undefined ? small : dur < 2.5;
+      if (this.banners.some((b) => b.title === title)) return;
+      if (small && this.banners.some((b) => !b.small && b.t < b.dur - 0.4)) return;
+      this.banners.push({ title, sub: sub || '', col: col || '#ff2448', t: 0, dur, small });
+      while (this.banners.length > BANNER_CAP) {
+        const i = this.banners.findIndex((b) => b.small); // a minor banner makes room first
+        this.banners.splice(i >= 0 && i < this.banners.length - 1 ? i : 0, 1);
+      }
     },
 
     update(dt) {
@@ -436,11 +468,14 @@
         }
       }
       this.parts.sweep();
+      let nums = 0;
       for (const t of this.texts.list) {
         t.life -= dt; if (t.life <= 0) { t.dead = true; continue; }
         t.y += t.vy * dt; t.vy *= Math.exp(-5 * dt);
+        if (!t.call) nums++;
       }
       this.texts.sweep();
+      this.numN = nums;
       for (const r of this.rings.list) { r.t += dt; if (r.t >= r.dur) r.dead = true; }
       this.rings.sweep();
       for (let i = this.arcs.length - 1; i >= 0; i--) { this.arcs[i].life -= dt; if (this.arcs[i].life <= 0) this.arcs.splice(i, 1); }

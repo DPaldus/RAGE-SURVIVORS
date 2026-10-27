@@ -21,8 +21,10 @@
       e.scale = def.scale * (elite ? 1.4 : 1);
       e.r = def.r * (elite ? 1.4 : 1);
       e.maxHp = e.hp = def.hp * hpMul;
-      e.spd = def.spd * TIER_SPD[tier] * (elite ? 0.9 : 1) * U.rand(0.92, 1.08);
-      e.dmgMul = TIER_DMG[tier] * (elite ? 1.3 : 1) * (this.mods.nomercy ? 1.25 : 1);
+      // THREAT LV (data/timeline.js) makes contact hits, shots and attacks land harder every 4:00 (not a boss's adds)
+      const thr = (k) => (o.noThreat ? 1 : D.threat(this, k));
+      e.spd = def.spd * TIER_SPD[tier] * (elite ? 0.9 : 1) * U.rand(0.92, 1.08) * thr('spd');
+      e.dmgMul = TIER_DMG[tier] * (elite ? 1.3 : 1) * (this.mods.nomercy ? 1.25 : 1) * thr('dmg');
       e.dmg = def.dmg * e.dmgMul;
       e.xp = def.xp * TIER_XP[tier] * (elite ? 12 : 1);
       e.mass = (def.mass || 1) * (elite ? 3 : 1);

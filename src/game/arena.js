@@ -61,9 +61,9 @@
       for (const pr of A.props) if (pr.type === 'carV' && Math.random() < 0.45) A.decals.push({ k: 'oil', x: pr.x + U.rand(-8, 8), y: pr.y + U.rand(-16, 16), r: U.rand(14, 30), r2: U.rand(8, 16) });
       for (let i = 0; i < 8; i++) A.decals.push({ k: 'splat', x: U.rand(150, W - 150), y: U.rand(150, H - 150), col: U.pick(['#9cff35', '#e2b934', '#f2f2ec']), n: U.randi(8, 18), r: U.rand(14, 32) });
       // a handful of big crew pieces near the walls and the stages, not all over the floor
-      const words = [['RAGE', '#7fd12a', 'crown'], ['SLATT', '#e2b934', null], ['B2', '#ecebe4', null], ['TWIZZYRICH', '#ecebe4', 'cross'], ['SCHMUNK', '#9cff35', null], ['LEAK IT', '#ff4f6e', null]];
-      const spots = A.platforms.map((pl) => [pl.x + pl.w / 2, pl.y + pl.h + 70]).concat([[U.rand(400, W - 400), 150], [U.rand(400, W - 400), H - 150], [160, U.rand(400, H - 400)]]);
-      U.shuffle(spots).slice(0, 6).forEach((sp, i) => { const w = words[i % words.length]; A.decals.push({ k: 'graffiti', x: sp[0] + U.rand(-60, 60), y: sp[1], word: w[0], col: w[1], sym: w[2], rot: U.rand(-0.12, 0.12), size: U.rand(70, 95) }); });
+      const words = [['RAGE', '#7fd12a', 'crown'], ['SLATT', '#e2b934', null], ['B2', '#ecebe4', null], ['TWIZZYRICH', '#ecebe4', 'cross'], ['SCHMUNK', '#9cff35', null], ['KUDLIS', '#ff2448', null], ['LEAK IT', '#ff4f6e', null]];
+      const spots = A.platforms.map((pl) => [pl.x + pl.w / 2, pl.y + pl.h + 70]).concat([[U.rand(400, W - 400), 150], [U.rand(400, W - 400), H - 150], [160, U.rand(400, H - 400)], [W - 160, U.rand(400, H - 400)]]);
+      U.shuffle(spots).slice(0, words.length).forEach((sp, i) => { const w = words[i % words.length]; A.decals.push({ k: 'graffiti', x: sp[0] + U.rand(-60, 60), y: sp[1], word: w[0], col: w[1], sym: w[2], rot: U.rand(-0.12, 0.12), size: U.rand(70, 95) }); });
       // ground material layers: big tonal blotches, repaired patches, mossy cracks, puddles, litter, gravel, glass, drains
       for (let i = 0; i < 36; i++) A.decals.push({ k: 'tone', x: U.rand(0, W), y: U.rand(0, H), r: U.rand(220, 520), dark: Math.random() < 0.6 });
       for (let i = 0; i < 12; i++) {

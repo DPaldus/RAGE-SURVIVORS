@@ -62,7 +62,7 @@
     peak(G) {
       const T = G.trip, th = T.theme, p = G.p, D = RS.Director;
       T.peak = 16;
-      FX.banner('TRIP PEAK', th.name + ' · ' + th.sub, th.col, 2.6);
+      FX.banner('TRIP PEAK', th.name + ' · ' + th.sub, th.col, 2.6, true); // minor: the picture itself shows the peak
       FX.flash(th.col, 0.3); FX.glitch(0.25);
       G.sfx('trip');
       const tier = D.tierFor(G), hp = D.hpMul(G);

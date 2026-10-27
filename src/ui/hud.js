@@ -166,17 +166,15 @@
         [0, 0, 0, W - 300 * s, W, 0, 120 * s],
         [W - mR - 26 * s, H - mR - 30 * s, mR + 14 * s],
       ];
-      // streak / momentum under the slots, like a wanted-level readout
-      let ly = bottom + 26 * s;
-      const rows = (p.streak >= 3 ? 30 : 0) + (p.momentumT > 0 && p.id === 'twizzy' ? 22 : 0) + (p.highGround ? 22 : 0);
-      if (rows) plate(ctx, 0, ly - 20 * s, pad + 300 * s, (rows + 14) * s, 'left');
-      if (p.streak >= 3) {
-        const w1 = big(ctx, 'STREAK', pad, ly, 34 * s, C.green, 'left');
-        big(ctx, ' x' + p.streak, pad + w1, ly, 34 * s, C.red, 'left');
-        ly += 30 * s;
+      // streak / momentum under the slots, like a wanted-level readout: one compact line, no backing band (it used to be
+      // a 34 px "STREAK x3813" on a dark plate plus a HIGH GROUND line the hero's own label already shows)
+      let ly = bottom + 18 * s;
+      if (p.streak >= 10) {
+        const w1 = big(ctx, 'STREAK ', pad, ly, 20 * s, C.green, 'left');
+        big(ctx, 'x' + U.fmtNum(p.streak), pad + w1, ly, 20 * s, C.red, 'left');
+        ly += 20 * s;
       }
-      if (p.momentumT > 0 && p.id === 'twizzy') { big(ctx, 'MOMENTUM ' + p.momentumT.toFixed(1) + 'S', pad, ly, 19 * s, C.text, 'left'); ly += 22 * s; }
-      if (p.highGround) { big(ctx, 'HIGH GROUND +15%', pad, ly, 19 * s, '#ffe14a', 'left'); ly += 22 * s; }
+      if (p.momentumT > 0 && p.id === 'twizzy') big(ctx, 'MOMENTUM ' + p.momentumT.toFixed(1) + 'S', pad, ly, 15 * s, C.muted, 'left');
       // controls hint during the first seconds
       if (G.time < 12) {
         ctx.globalAlpha = Math.min(1, (12 - G.time) / 2);
@@ -232,8 +230,7 @@
       // dash readiness as a segmented meter
       const dk = p.dash.cd > 0 ? 1 - p.dash.cd / p.s.dashCd : 1;
       big(ctx, 'DASH', sx + 12 * s, y0 + 54 * s, 15 * s, dk >= 1 ? C.text : C.muted, 'left', 1 * s);
-      segBar(ctx, hx, y0 + Math.round(49 * s), hw * 0.62, Math.round(7 * s), 8, dk, dk >= 1 ? C.text : '#8d918b', '#262826');
-      text(ctx, 'SPACE', hx + hw, y0 + 53 * s, 11 * s, C.muted, 'right', MONO, 600, 1 * s);
+      segBar(ctx, hx, y0 + Math.round(49 * s), hw, Math.round(7 * s), 8, dk, dk >= 1 ? C.text : '#8d918b', '#262826');
       // XP: slim green strip along the bottom edge of the panel
       const xk = p.xp / p.xpNext;
       ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(sx + 10 * s, y0 + sh - 6 * s, sw - 20 * s, 3 * s);
@@ -263,31 +260,37 @@
         ctx.globalAlpha = 1;
         x += ss + gap;
       }
-      const ts = Math.round(34 * s), tx0 = x + Math.round(6 * s), ty = wy + bh - ts;
-      for (let i = 0; i < p.maxTapes; i++) {
-        const tp = p.tapes[i];
-        slot(ctx, tx0 + i * (ts + gap), ty, ts, ts, s, { id: tp ? tp.id : null, tag: tp ? tp.def.col : '#2a2440', label: tp ? (tp.level >= tp.def.max ? 'MAX' : String(tp.level)) : '' });
-      }
-      if (!p.tapes.length) big(ctx, 'TAPES', tx0 + (p.maxTapes * (ts + gap) - gap) / 2, ty - 7 * s, 11 * s, C.muted, 'center', 0.5 * s);
+      // passives, then the TAPES at the end of the same row after a gap (the TAPES used to sit right of the weapon slots,
+      // where a 5-slot build pushed them into the boss bar under the timer)
       const iy = wy + bh + Math.round(8 * s), is = Math.round(34 * s);
       for (let i = 0; i < 6; i++) {
         const it = p.passives[i];
         slot(ctx, sx + i * (is + gap), iy, is, is, s, { id: it ? it.id : null, label: it ? String(it.level) + (it.ghost ? '+' : '') : '' });
       }
-      // stash: one small slot per item (rarity-coloured edge, copy count), up to two rows of 10, then "+N"
+      const ts = is, tx0 = sx + 6 * (is + gap) + Math.round(12 * s);
+      for (let i = 0; i < p.maxTapes; i++) {
+        const tp = p.tapes[i];
+        slot(ctx, tx0 + i * (ts + gap), iy, ts, ts, s, { id: tp ? tp.id : null, tag: tp ? tp.def.col : '#2a2440', label: tp ? (tp.level >= tp.def.max ? 'MAX' : String(tp.level)) : '' });
+      }      // stash: ONE row of small slots, the items with a live readout (STAND STILL, DEMON TIME) first, then the newest,
+      // then "+N". The full list is in the pause screen (it used to be up to two rows of 10 under the inventory, so
+      // the top-left block reached a third of the screen height in a late run)
       const st = p.stashOrder;
       if (!st.length) return iy + is;
-      const ks = Math.round(27 * s), kg = Math.round(4 * s), ky0 = iy + is + Math.round(8 * s), per = 10;
-      const shown = Math.min(st.length, per * 2 - (st.length > per * 2 ? 1 : 0));
+      const ks = Math.round(24 * s), kg = Math.round(4 * s), ky = iy + is + Math.round(7 * s), per = 8;
+      const live = st.filter((id) => D.STASH[id].hud && D.STASH[id].hud(p.stashSt[id]));
+      const order = live.concat(st.slice().reverse().filter((id) => !live.includes(id)));
+      const shown = Math.min(order.length, st.length > per ? per - 1 : per);
+      ctx.globalAlpha = 0.85;
       for (let i = 0; i < shown; i++) {
-        const id = st[i], def = D.STASH[id], n = p.stash[id], x = sx + (i % per) * (ks + kg), y = ky0 + Math.floor(i / per) * (ks + kg);
-        slot(ctx, x, y, ks, ks, s, { id, tag: D.RARITY[def.rarity].col });
-        if (n > 1) big(ctx, 'x' + n, x + ks + 1 * s, y + ks - 4 * s, 12 * s, C.text, 'right', 0.5 * s);
-        const h = def.hud && def.hud(p.stashSt[id]); // a live value (STAND STILL, DEMON TIME) across the top of the slot
-        if (h) big(ctx, h, x + ks / 2, y + 5 * s, 10 * s, def.col, 'center', 0.5 * s);
+        const id = order[i], def = D.STASH[id], n = p.stash[id], x = sx + i * (ks + kg);
+        slot(ctx, x, ky, ks, ks, s, { id, tag: D.RARITY[def.rarity].col });
+        if (n > 1) big(ctx, 'x' + n, x + ks + 1 * s, ky + ks - 4 * s, 11 * s, C.text, 'right', 0.5 * s);
+        const h = def.hud && def.hud(p.stashSt[id]); // a live value across the top of the slot
+        if (h) big(ctx, h, x + ks / 2, ky + 5 * s, 10 * s, def.col, 'center', 0.5 * s);
       }
-      if (shown < st.length) big(ctx, '+' + (st.length - shown), sx + (shown % per) * (ks + kg) + ks / 2, ky0 + (ks + kg) + ks / 2 + 1 * s, 15 * s, C.text, 'center', 0.5 * s);
-      return ky0 + Math.ceil(Math.min(st.length, per * 2) / per) * (ks + kg);
+      ctx.globalAlpha = 1;
+      if (shown < st.length) big(ctx, '+' + (st.length - shown), sx + shown * (ks + kg) + ks / 2, ky + ks / 2 + 1 * s, 14 * s, C.muted, 'center', 0.5 * s);
+      return ky + ks;
     },
     // round ability button on the portrait corner: cooldown sweep, live countdown, pulse when ready
     abilityBadge(ctx, G, p, cx, cy, s) {
@@ -310,9 +313,10 @@
       const cx = W / 2;
       big(ctx, U.fmtTime(G.time), cx, y0 + 26 * s, 60 * s, C.text, 'center', 2 * s);
       // wave | kills | clout pill
-      const fs = 23 * s, ky = y0 + 70 * s, kt = U.fmtNum(G.stats.kills), ct = U.fmtNum(G.runClout), fin = G.time >= D.RUN_LENGTH;
+      const fs = 23 * s, ky = y0 + 70 * s, kt = U.fmtNum(G.stats.kills), fin = G.time >= D.RUN_LENGTH;
       const wn = D.waveAt(G.time), wt = fin ? 'FINAL' : wn + '/' + D.WAVES;
-      const parts = [['WAVE ', C.text], [wt, fin ? C.red : C.green], ['   |   ', C.muted], ['KILLS ', C.text], [kt, C.green], ['   |   ', C.muted], ['CLOUT ', C.text], [ct, C.green]];
+      // (CLOUT left the pill: the same run cash is the big number top right)
+      const parts = [['WAVE ', C.text], [wt, fin ? C.red : C.green], ['   |   ', C.muted], ['KILLS ', C.text], [kt, C.green]];
       const ws = parts.map((q) => measure(ctx, q[0], fs));
       const tw = ws.reduce((a, b) => a + b, 0), pw = tw + 30 * s, ph = 32 * s;
       panel(ctx, cx - pw / 2, ky - ph / 2, pw, ph, 7 * s);
@@ -349,14 +353,13 @@
     // ---------------------------------------------------------------- top right: money, rage thumbs, buffs
     rightColumn(ctx, G, p, W, y0, s) {
       const rx = W - Math.round(22 * s);
-      const total = Math.max(0, Math.floor((RS.Save.data.clout || 0) + G.runClout));
-      big(ctx, '$' + String(total).padStart(7, '0'), rx, y0 + 26 * s, 54 * s, C.money, 'right', 1.5 * s);
-      // the big number is the bank plus this run; only this run's CL0UT can be spent at THE PLUG, so it gets its own
-      // line (playtest: "I had $100 and could not buy anything" while the run itself held $40)
-      big(ctx, 'RUN $' + Math.floor(G.runClout), rx, y0 + 62 * s, 24 * s, C.green, 'right', 1 * s);
-      let ry = y0 + 84 * s;
+      // the big number is this run's cash: the only money that does anything in a run (THE PLUG). It used to be the bank
+      // plus the run with the run on a second line, which read as "I have $1056 and cannot buy anything" (2026-10-27)
+      big(ctx, '$' + String(Math.max(0, Math.floor(G.runClout))).padStart(7, '0'), rx, y0 + 26 * s, 54 * s, C.money, 'right', 1.5 * s);
+      let ry = y0 + 62 * s;
       const MM = G.mapMode;
-      if (MM && MM.cash > 1) { big(ctx, MM.name + ' · ' + MM.cash + '× CASH', rx, y0 + 88 * s, 18 * s, MM.col, 'right', 1 * s); ry += 22 * s; }
+      if (MM && MM.cash > 1) { big(ctx, MM.name + ' · ' + MM.cash + '× CASH', rx, ry, 17 * s, MM.col, 'right', 1 * s); ry += 20 * s; }
+      ry += 4 * s;
       const ts = Math.round(40 * s), gap = Math.round(7 * s);
       p.thumbs.forEach((th, i) => {
         const x = rx - (i + 1) * (ts + gap) + gap;
@@ -364,15 +367,17 @@
         if (th.def.hud) big(ctx, th.def.hud(p, th.st), x + ts / 2, ry + ts + 11 * s, 15 * s, th.def.col, 'center', 0.5 * s);
       });
       if (p.thumbs.length) ry += ts + 30 * s;
+      // buffs: a light line each (icon, name, seconds, a thin timer bar), no box; the name only while the buff is fresh
+      // or about to run out, so a long buff settles into icon + bar
       for (const b of p.buffs) {
-        const bw = Math.round(176 * s), bh = Math.round(34 * s), bx = rx - bw;
-        panel(ctx, bx, ry, bw, bh, 6 * s);
+        const bw = Math.round(150 * s), bh = Math.round(26 * s), bx = rx - bw, col = b.debuff ? '#ff6a7a' : (b.col || C.green);
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(I.get(b.icon || 'perc'), bx + 5 * s, ry + 4 * s, 26 * s, 26 * s);
-        big(ctx, b.name, bx + 37 * s, ry + 12 * s, 16 * s, b.debuff ? '#ff6a7a' : C.text, 'left', 0.5 * s);
-        big(ctx, b.t.toFixed(1) + 'S', rx - 7 * s, ry + 12 * s, 15 * s, C.muted, 'right', 0.5 * s);
-        bar(ctx, bx + 37 * s, ry + bh - 9 * s, bw - 44 * s, Math.round(4 * s), b.t / b.max, b.debuff ? '#ff6a7a' : (b.col || C.green), 'rgba(0,0,0,0.6)');
-        ry += bh + 6 * s;
+        ctx.drawImage(I.get(b.icon || 'perc'), bx, ry, 22 * s, 22 * s);
+        const named = b.max - b.t < 2.5 || b.t < 2 || b.debuff;
+        if (named) big(ctx, b.name, bx + 28 * s, ry + 8 * s, 14 * s, b.debuff ? '#ff6a7a' : C.text, 'left', 0.5 * s);
+        big(ctx, Math.ceil(b.t) + 'S', rx, ry + 8 * s, 14 * s, C.muted, 'right', 0.5 * s);
+        bar(ctx, bx + 28 * s, ry + 18 * s, bw - 28 * s, Math.round(3 * s), b.t / b.max, col, 'rgba(0,0,0,0.6)');
+        ry += bh + 4 * s;
       }
       for (const w of p.weapons) if (w.temp && w.tempT > 0) {
         big(ctx, 'CHAOS · ' + w.def.name + ' ' + (w.tempName || '') + ' ' + w.tempT.toFixed(1) + 'S', rx, ry + 8 * s, 15 * s, '#ff4f6e', 'right', 0.5 * s);
@@ -412,12 +417,13 @@
       const V = RS.Render.view, k = W / RS.Main.W, z = V.z * k;
       const tx = (x) => (x - V.cx) * z + W / 2, ty = (y) => (y - V.cy) * z + H / 2;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-      const zones = this.panelZones || [];
+      const zones = (this.panelZones || []).concat(this.bannerZones || []); // HUD panels and the banners on screen
       for (const t of FX.texts.list) {
         const X = tx(t.x), Y = ty(t.y);
         if (X < -60 || X > W + 60 || Y < -40 || Y > H + 40) continue;
-        let hidden = false; // damage numbers never sit on top of the HUD panels
-        for (const r of zones) if (r[2] ? (X - r[0]) ** 2 + (Y - r[1]) ** 2 < r[2] * r[2] : X > r[3] && X < r[4] && Y > r[5] && Y < r[6]) { hidden = true; break; }
+        let hidden = false; // damage numbers never sit on top of the HUD panels or a banner (the hero's own "-12" always shows)
+        const own = t.call && String(t.str)[0] === '-';
+        if (!own) for (const r of zones) if (r[2] ? (X - r[0]) ** 2 + (Y - r[1]) ** 2 < r[2] * r[2] : X > r[3] && X < r[4] && Y > r[5] && Y < r[6]) { hidden = true; break; }
         if (hidden) continue;
         const kk = t.life / t.max;
         const pop = t.crit ? 1 + Math.max(0, (kk - 0.75)) * 3 : 1;
@@ -607,7 +613,7 @@
       const p = G.p;
       for (const k of G.pickups.list) if (!k.dead && k.kind === 'ruby') targets.push([k.x, k.y, '#ff2448', 'DIAMOND ' + Math.max(0, Math.ceil(RS.Data.LOOT.rubyLife - k.age)) + 'S']);
       const loot = G.pickups.list.filter((k) => k.kind === 'chest' || k.kind === 'thumb')
-        .sort((a, b) => U.dist2(a.x, a.y, p.x, p.y) - U.dist2(b.x, b.y, p.x, p.y)).slice(0, 3);
+        .sort((a, b) => U.dist2(a.x, a.y, p.x, p.y) - U.dist2(b.x, b.y, p.x, p.y)).slice(0, 2); // the two nearest
       for (const k of loot) targets.push([k.x, k.y, k.kind === 'thumb' ? '#ff4f6e' : '#ffcf3f', k.kind === 'thumb' ? 'THUMB' : 'CHEST']);
       for (const e of G.enemies.list) if (!e.dead && e.type === 'leak') targets.push([e.x, e.y, '#ffcf3f', 'LEAK']);
       if (RS.Director.cypher && RS.Director.cypher.state === 'wait') targets.push([RS.Director.cypher.x, RS.Director.cypher.y, '#ffcf3f', 'CYPHER']);
@@ -642,15 +648,19 @@
 
     banners(ctx, G, W, H, s) {
       let y = H * 0.32; // below the timer, pill and boss bars
+      const bz = this.bannerZones = []; // damage numbers and callouts stay out of a banner (next frame, like panelZones)
       for (const b of FX.banners) {
         const inK = Math.min(1, b.t * 5), outK = Math.min(1, (b.dur - b.t) * 3);
         const a = Math.min(inK, outK);
-        const size = Math.min((b.small ? 40 : 78) * s, (W * 0.92) / Math.max(6, b.title.length) * 2.1);
+        const size = Math.min((b.small ? 34 : 72) * s, (W * 0.92) / Math.max(6, b.title.length) * 2.1);
+        bz.push([0, 0, 0, W / 2 - W * 0.3, W / 2 + W * 0.3, y - size * 0.62, y + size * 0.48 + (b.sub ? 34 : 10) * s]);
         ctx.globalAlpha = a;
         // a controlled glitch: two offset steps on entry (not a per-frame jitter), then a clean title
         const jx = b.t < 0.12 ? -6 * s : b.t < 0.25 ? 4 * s : 0;
         const accent = b.col === '#ffffff' || b.col === '#e3ece6' ? C.green : b.col;
-        plate(ctx, W / 2 - W * 0.36, y - size * 0.62, W * 0.72, size * 0.62 + (b.sub ? 44 : 22) * s + size * 0.48, 'center');
+        // the dark band only behind the big ones (boss, evolution, synergy...); minor banners are bare outlined type, so
+        // a routine call-out no longer drops a 70%-wide strip across the middle of the fight
+        if (!b.small) plate(ctx, W / 2 - W * 0.3, y - size * 0.62, W * 0.6, size * 0.62 + (b.sub ? 44 : 22) * s + size * 0.48, 'center');
         if (b.t < 0.35) disp(ctx, b.title, W / 2 + jx + 4 * s, y, size, U.rgba(accent, 0.65), 'center', size * 0.05);
         disp(ctx, b.title, W / 2 - jx * 0.3, y, size, accent === C.red || accent === C.green ? C.text : accent, 'center', size * 0.05);
         // accent rule under the title

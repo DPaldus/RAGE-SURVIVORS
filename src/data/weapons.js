@@ -258,7 +258,7 @@
     // 2026-10-26: radius 85 -> 75, blast 26 / +12 / +14 -> 18 / +9 / +10, tick +3 -> +2, size steps 20 / 25 -> 15 / 15%.
     // Build bench (15:00 crowd, LV 8 alone, 3 seeds): 3.8x the damage of a CHROME WHIP / RAGE ROCKET level weapon, now
     // ~2.8x (-25% damage, -32% kills); the pull still groups the crowd for everything else
-    base: { dmg: 4, cd: 4.2, area: 1, dur: 1.6, pull: 150, blast: 18, amount: 1, radius: 75 },
+    base: { dmg: 4, cd: 4.2, area: 1, dur: 1.6, pull: 150, blast: 15, amount: 1, radius: 75 }, // blast was 18: the strongest base weapon on the bench (2026-10-27)
     lv: [[{ area: 0.15 }, '+15% size'], [{ blast: 9 }, '+9 blast damage'], [{ cd: -0.5 }, '-0.5s cooldown'], [{ dur: 0.5 }, '+0.5s duration'],
       [{ amount: 1 }, '+1 vortex'], [{ dmg: 2, blast: 10 }, '+2 tick, +10 blast damage'], [{ area: 0.15 }, '+15% size']],
     evo: 'schmunk_storm', evoWith: 'double_cup',
@@ -267,7 +267,7 @@
   def({
     id: 'schmunk_storm', name: 'SCHMUNK STORM', evolved: true, from: 'twizzy_tornado', role: 'Evolution',
     desc: 'A huge wandering storm that hunts crowds and spits bouncing discs.',
-    base: { dmg: 6, cd: 3.4, area: 1.8, dur: 4.0, pull: 210, blast: 55, amount: 1, radius: 90 }, // was 8 / 75: top-3 evolution on the bench
+    base: { dmg: 6, cd: 3.4, area: 1.8, dur: 4.0, pull: 210, blast: 48, amount: 1, radius: 90 }, // was 8 / 75, then blast 55 (2026-10-27): still a top-3 evolution and in most winning bot runs
     fire: (w, p, G, S) => tornado(w, p, G, S, true),
   });
 
@@ -534,7 +534,7 @@
   def({
     id: 'purple_haze', name: 'PURPLE HAZE', evolved: true, from: 'mosh_pit', role: 'Evolution',
     desc: 'Huge purple pits that slow enemies and keep dragging them into the center.',
-    base: { dmg: 11, cd: 3.5, area: 1.7, radius: 72, dur: 5, tick: 0.3, amount: 2, knock: 10 }, // was 14 / 2.0: two pits covered half the screen
+    base: { dmg: 10, cd: 3.5, area: 1.7, radius: 72, dur: 5, tick: 0.3, amount: 2, knock: 10 }, // was 14 / 2.0: two pits covered half the screen; dmg 11 until 2026-10-27
     fire: (w, p, G, S) => mosh(w, p, G, S, true),
   });
 
@@ -561,7 +561,7 @@
   def({
     id: 'soundwave', name: 'SOUNDWAVE', role: 'Cone · knockback', sonic: true,
     desc: 'A cone-shaped sonic blast toward the nearest enemy. Gets wider every level.',
-    base: { dmg: 19, cd: 1.9, angle: 0.7, range: 220, area: 1, knock: 180, amount: 1 }, // was 14: the weakest weapon on the bench
+    base: { dmg: 21, cd: 1.9, angle: 0.7, range: 220, area: 1, knock: 180, amount: 1 }, // was 14, then 19: still the weakest weapon on the bench (2026-10-27)
     lv: [[{ angle: 0.2 }, 'Wider cone'], [{ dmg: 6 }, '+6 damage'], [{ area: 0.2 }, '+20% range'], [{ cd: -0.3 }, '-0.3s cooldown'],
       [{ angle: 0.25 }, 'Wider cone'], [{ dmg: 8 }, '+8 damage'], [{ amount: 1 }, 'Also blasts backward']],
     evo: 'clip_distortion', evoWith: 'headphones',
@@ -570,7 +570,7 @@
   def({
     id: 'clip_distortion', name: 'CLIP DISTORTION', evolved: true, from: 'soundwave', role: 'Evolution', sonic: true,
     desc: 'Massive clipped waves both ways. Each hit stacks +8% damage taken (max 10).',
-    base: { dmg: 30, cd: 1.4, angle: 2.1, range: 230, area: 1.5, knock: 220, amount: 2 },
+    base: { dmg: 34, cd: 1.4, angle: 2.1, range: 230, area: 1.5, knock: 220, amount: 2 }, // was 30: bottom-3 evolution on the bench (2026-10-27)
     fire: (w, p, G, S) => soundwave(w, p, G, S, true),
   });
 
@@ -595,7 +595,7 @@
   def({
     id: 'silent_violence', name: 'SILENT VIOLENCE', evolved: true, from: 'dead_air', role: 'Evolution',
     desc: 'Enemies trapped in the silence take damage that grows every tick.',
-    base: { cd: 5, area: 1.8, radius: 90, dur: 6, vuln: 0.4, slow: 0.7, dmg: 8, tick: 0.4, amount: 1, ramp: 0.18 }, // was vuln 0.5, ramp 0.25
+    base: { cd: 5, area: 1.8, radius: 90, dur: 6, vuln: 0.4, slow: 0.7, dmg: 8, tick: 0.4, amount: 1, ramp: 0.16 }, // was vuln 0.5, ramp 0.25, then ramp 0.18 (2026-10-27: top evolution on the bench)
     fire: (w, p, G, S) => deadAir(w, p, G, S, true),
   });
 
@@ -757,7 +757,7 @@
   def({
     id: 'fire_mixtape', name: 'FIRE MIXTAPE', evolved: true, from: 'cassette_mines', role: 'Evolution',
     desc: 'You leave a trail of fire tapes as you move. Blasts leave burning ground.',
-    base: { dmg: 50, cd: 0.9, amount: 1, area: 1.4, radius: 80, arm: 0.3, fuse: 3, maxMines: 14 }, // was 60
+    base: { dmg: 46, cd: 0.9, amount: 1, area: 1.4, radius: 80, arm: 0.3, fuse: 3, maxMines: 14 }, // was 60, then 50 (2026-10-27: top-4 evolution on the bench)
     fire: (w, p, G, S) => dropMine(w, p, G, S, true, p.x, p.y),
     update: (w, p, G, S, dt) => {
       w.trail = (w.trail || 0) + Math.hypot(p.vx, p.vy) * dt;

@@ -56,7 +56,7 @@
       this.p = new RS.Player(cfg.char, cfg);
       this.p.x = this.arena.w / 2; this.p.y = this.arena.h / 2;
       this.cam.x = this.p.x; this.cam.y = this.p.y;
-      this.p.addWeapon(cfg.startWeapon || D.CHARACTERS[cfg.char].weapon);
+      this.p.addWeapon(cfg.startWeapon || D.CHARACTERS[cfg.char].weapon).starter = true; // the hero's own gun (Progression: no focus, not a 'recent' pick)
       RS.Director.reset(this);
       RS.Post.trip = 0;
       RS.Trip.start(this);
@@ -322,7 +322,7 @@
       const before = p.hp;
       p.hp = Math.min(RS.Stash.cap(p), p.hp + amt); // overheal room from CHONK DRIP / GASSED
       this.healAcc = (this.healAcc || 0) + p.hp - before; // HOLY RAGE sears with it
-      if (p.hp - before >= 1) { FX.text(p.x, p.y - 30, '+' + Math.round(p.hp - before), '#9cff35', 14, { always: true }); this.sfx('heal'); }
+      if (p.hp - before >= 1) { if (p.hp - before >= 5) FX.text(p.x, p.y - 30, '+' + Math.round(p.hp - before), '#9cff35', 14, { always: true }); this.sfx('heal'); } // small trickles (regen procs) heal without a number
     },
     vacuum(r) {
       const p = this.p;
@@ -428,6 +428,9 @@
       d.bestKills = Math.max(d.bestKills, st.kills);
       d.bestTimeByChar[this.cfg.char] = Math.max(d.bestTimeByChar[this.cfg.char] || 0, this.time);
       if (victory) d.wins++;
+      // the weapons this run picked up (not the starter): the next runs offer them a little less, so builds rotate
+      const picked = p.weapons.filter((w) => !w.starter).map((w) => w.def.from || w.def.id);
+      d.recentWeapons = [picked].concat(Array.isArray(d.recentWeapons) ? d.recentWeapons : []).slice(0, D.BUILD.recentRuns);
       S.save();
       this.results = {
         victory, reason, survived30: this.time >= D.RUN_LENGTH, coins: Math.round(this.runClout), stage: this.mods.nomercy ? 'NO MERCY' : 'NORMAL',

@@ -576,7 +576,7 @@
             <div class="setting-hint">Graphics quality adjusts itself: if the frame rate drops below 60 for a few seconds, detail steps down automatically.</div>
           </section>
           <section class="spanel"><div class="sp-h">CONTROLS</div>
-            <div class="keys"><span><kbd>WASD</kbd> / arrows move</span><span><kbd>SPACE</kbd> dash</span><span><kbd>F</kbd> <kbd>Q</kbd> <kbd>SHIFT</kbd> ability</span><span><kbd>E</kbd> open chest</span><span><kbd>ESC</kbd> pause</span><span><kbd>1–4</kbd> pick card</span><span><kbd>R</kbd> reroll</span><span>gamepad supported</span></div>
+            <div class="keys"><span><kbd>WASD</kbd> / arrows move</span><span><kbd>SPACE</kbd> dash</span><span><kbd>F</kbd> <kbd>Q</kbd> <kbd>SHIFT</kbd> ability</span><span><kbd>E</kbd> open chest</span><span><kbd>ESC</kbd> pause</span><span><kbd>A</kbd> <kbd>D</kbd> + <kbd>E</kbd> or <kbd>1–4</kbd> pick card</span><span><kbd>R</kbd> reroll</span><span>gamepad supported</span></div>
             <div class="row" style="margin-top:24px"><button class="btn small danger" data-act="reset">RESET ALL PROGRESS</button></div>
           </section>
         </div></div></div>

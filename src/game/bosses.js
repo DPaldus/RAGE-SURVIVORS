@@ -79,7 +79,7 @@
         const n = ph2 ? 9 : 6;
         for (let i = 0; i < n; i++) {
           const a = (i / n) * TAU;
-          G.spawnEnemy(i % 4 === 0 && ph2 ? 'fiend' : 'npc', e.x + Math.cos(a) * 120, e.y + Math.sin(a) * 120, { tier: RS.Director.tierFor(G), hpMul: RS.Director.hpMul(G), telegraph: true });
+          G.spawnEnemy(i % 4 === 0 && ph2 ? 'fiend' : 'npc', e.x + Math.cos(a) * 120, e.y + Math.sin(a) * 120, { tier: RS.Director.tierFor(G), hpMul: RS.Director.hpMul(G, true), telegraph: true, noThreat: true });
         }
         FX.text(e.x, e.y - 90, 'INDUSTRY PLANTS!', '#3fbf4f', 15, { always: true, life: 1.2 });
         G.sfx('warning');
@@ -141,7 +141,7 @@
         FX.banner('THE ALGORITHM CHANGED THE RULES', 'POWER SURGE · HAZARDS ONLINE', '#e3ece6', 2.6);
         for (let i = 0; i < (ph2 ? 8 : 5); i++) {
           const a = U.rand(TAU);
-          G.spawnEnemy('glitch', p.x + Math.cos(a) * 340, p.y + Math.sin(a) * 340, { tier: RS.Director.tierFor(G), hpMul: RS.Director.hpMul(G), telegraph: true });
+          G.spawnEnemy('glitch', p.x + Math.cos(a) * 340, p.y + Math.sin(a) * 340, { tier: RS.Director.tierFor(G), hpMul: RS.Director.hpMul(G, true), telegraph: true, noThreat: true });
         }
         G.sfx('warning');
       }
@@ -189,7 +189,7 @@
         e.state = 'cast'; e.st = 0.9;
         for (let i = 0; i < 6; i++) {
           const a = (i / 6) * TAU;
-          G.spawnEnemy('fiend', e.x + Math.cos(a) * 150, e.y + Math.sin(a) * 150, { tier: RS.Director.tierFor(G), hpMul: RS.Director.hpMul(G), telegraph: true });
+          G.spawnEnemy('fiend', e.x + Math.cos(a) * 150, e.y + Math.sin(a) * 150, { tier: RS.Director.tierFor(G), hpMul: RS.Director.hpMul(G, true), telegraph: true, noThreat: true });
         }
         FX.text(e.x, e.y - 110, 'RISE, FIENDS', '#ff2448', 15, { always: true, life: 1.2 });
         G.sfx('warning');
@@ -249,7 +249,7 @@
       } else if (atk === 'sign') { // two signed guards step out beside you
         for (const s of [-1, 1]) {
           const a = Math.atan2(p.y - e.y, p.x - e.x) + s * Math.PI / 2;
-          G.spawnEnemy('guard', p.x + Math.cos(a) * 240, p.y + Math.sin(a) * 240, { tier: 2, hpMul: RS.Director.hpMul(G), telegraph: true, noChest: true });
+          G.spawnEnemy('guard', p.x + Math.cos(a) * 240, p.y + Math.sin(a) * 240, { tier: 2, hpMul: RS.Director.hpMul(G, true), telegraph: true, noThreat: true, noChest: true });
         }
         FX.text(e.x, e.y - 100, 'SIGNED', '#ffcf3f', 15, { always: true, life: 1.1 });
       }

@@ -1069,9 +1069,12 @@
         if (k.kind === 'xp') {
           const T = RS.GEM_TIERS[k.tier];
           const r = T.r * (1 + pulse * 0.15);
-          if (RS.Post.minor()) RS.Post.glow(k.x, k.y, r * 2.8, T.col, 0.3);
-          ctx.fillStyle = T.col;
-          ctx.beginPath(); ctx.moveTo(k.x, k.y - r * 1.3); ctx.lineTo(k.x + r, k.y); ctx.lineTo(k.x, k.y + r * 1.3); ctx.lineTo(k.x - r, k.y); ctx.closePath(); ctx.fill();
+          // only gems near the hero (or flying to him) glow: a whole floor of glowing gems washed the late fight out
+          const near = k.attract || U.dist2(k.x, k.y, G.p.x, G.p.y) < 420 * 420;
+          if (near && RS.Post.minor()) RS.Post.glow(k.x, k.y, r * 2.8, T.col, 0.3);
+          ctx.beginPath(); ctx.moveTo(k.x, k.y - r * 1.3); ctx.lineTo(k.x + r, k.y); ctx.lineTo(k.x, k.y + r * 1.3); ctx.lineTo(k.x - r, k.y); ctx.closePath();
+          ctx.strokeStyle = 'rgba(8,14,4,0.85)'; ctx.lineWidth = 2; ctx.stroke(); // a dark rim: an object on the floor, not a light
+          ctx.fillStyle = T.col; ctx.fill();
           ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(k.x - 1.5, k.y - r * 0.6, 2, 3);
         } else if (k.kind === 'ruby') {
           this.drawRuby(ctx, G, k, t);
@@ -1157,7 +1160,7 @@
         ctx.strokeStyle = U.rgba('#ff2448', 0.8); ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(k.x, k.y + bob, 38, -Math.PI / 2, -Math.PI / 2 + TAU * (left / 15)); ctx.stroke();
       }
-      R.label(k.x, k.y + 46, 'RED DIAMOND', '#ff2448', 11, dim);
+      if (U.dist2(k.x, k.y, G.p.x, G.p.y) > 340 * 340) R.label(k.x, k.y + 46, 'RED DIAMOND', '#ff2448', 11, dim); // the name only from afar: up close the gem says it
     },
     drawMoshZone(ctx, z, fade) {
       const col = z.col, a = z.age, fog = col === '#9b4dff';
@@ -1227,6 +1230,9 @@
     // (The painted sprite was an opaque grey cone 2x the radius wide and hid everything under it.)
     drawTornado(ctx, z, t, fade) {
       const r = z.r, col = z.col, spin = z.age * 9, grow = Math.min(1, z.age * 5);
+      // a big storm (late area bonuses, several at once) gets fainter lines: two or three of them stacked over the hero
+      // turned the middle of the screen into a green wash (2026-10-27 UI pass)
+      fade *= Math.min(1, Math.sqrt(150 / Math.max(1, r)));
       // ground: faint disk + four swirl arms spiralling inwards
       ctx.fillStyle = U.rgba(col, 0.07 * fade); ctx.beginPath(); ctx.ellipse(z.x, z.y, r, r * 0.55, 0, 0, TAU); ctx.fill();
       ctx.lineCap = 'round';
@@ -1254,7 +1260,7 @@
         const a = spin * 1.3 + i * 1.05, f = (i % 3) / 3 + 0.15, rr = r * (0.25 + 0.55 * f);
         ctx.fillRect(z.x + Math.cos(a) * rr - 2, z.y - H * f + Math.sin(a) * rr * 0.28 - 2, 4, 4);
       }
-      if (RS.Post.minor()) RS.Post.glow(z.x, z.y, r * 0.6, col, 0.25 * fade);
+      if (RS.Post.minor()) RS.Post.glow(z.x, z.y, r * 0.5, col, 0.12 * fade);
       ctx.lineCap = 'butt';
     },
     // SWITCHBLADE / BUTTERFLY FLIP: a small knife (about half the hero's height) held at chest height. The arm jabs

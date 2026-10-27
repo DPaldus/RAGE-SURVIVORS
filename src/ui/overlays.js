@@ -45,6 +45,7 @@
 
   const O = {
     kind: null, cards: [], thumbIds: [], banishMode: false, readyAt: 0, chestTimer: null,
+    sel: 0, // the level-up card the keyboard has selected (A / D, ← / →, E takes it; the mouse moves it too)
     init() {
       window.addEventListener('keydown', (e) => this.onKey(e));
     },
@@ -74,7 +75,12 @@
       let used = true;
       if (this.kind === 'levelup') {
         const n = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Numpad1: 0, Numpad2: 1, Numpad3: 2, Numpad4: 3 }[k];
-        if (n !== undefined && this.cards[n]) this.act('pick', String(n));
+        const step = { KeyA: -1, ArrowLeft: -1, KeyD: 1, ArrowRight: 1 }[k];
+        // A / D or ← / → walk the selection one card per press (a held movement key does not auto-scroll it), E takes
+        // it. Both are ignored as repeats, so a key still held from the run cannot skip or pick anything
+        if (step !== undefined) { if (!e.repeat) this.moveSel(step); }
+        else if (k === 'KeyE') { if (!e.repeat && this.cards[this.sel]) this.act('pick', String(this.sel)); }
+        else if (n !== undefined && this.cards[n]) this.act('pick', String(n));
         else if (k === 'KeyR') this.act('reroll');
         else if (k === 'KeyB') this.act('banish');
         else used = false;
@@ -124,7 +130,7 @@
           if (p.rerolls <= 0) return;
           p.rerolls--;
           this.cards = RS.Progression.choices(g);
-          this.banishMode = false;
+          this.banishMode = false; this.sel = 0;
           RS.Audio.sfx('chestTick');
           this.drawLevelUp();
           break;
@@ -184,7 +190,7 @@
       this.cards = RS.Progression.choices(g);
       // nothing left to offer: take the small consolation reward instead of an empty screen
       if (!this.cards.length) { RS.Progression.skip(g); this.afterLevel(); return; }
-      this.banishMode = false;
+      this.banishMode = false; this.sel = 0; // a new offer starts on the first card
       this.readyAt = performance.now() + (again ? 200 : 380);
       if (!again) RS.Audio.sfx('levelup');
       this.drawLevelUp();
@@ -194,7 +200,7 @@
     // the card reads at a glance; the effect lines below say exactly what you get.
     cardHTML(c, i) {
       const R = D.RARITY[c.rarity];
-      return `<div class="card r${c.rarity}" data-act="pick" data-arg="${i}">
+      return `<div class="card r${c.rarity}${c.effects.length >= 4 ? ' long' : ''}" data-act="pick" data-arg="${i}">
         ${c.rarity >= 3 ? '<div class="sheen"></div>' : ''}
         ${c.isNew ? '<div class="hot">NEW</div>' : ''}
         <div class="rar"><span class="rn">${R.name}</span><span class="pips">${'<i></i>'.repeat(c.rarity + 1)}</span></div>
@@ -203,10 +209,15 @@
         <div class="name">${esc(c.name)}</div>
         <div class="lvl">${esc(c.lvl || '')}</div>
         ${c.desc ? `<div class="desc">${esc(this.shortDesc(c.desc))}</div>` : ''}
-        <div class="eff">${c.effects.map((e) => `<div>${esc(e)}</div>`).join('')}</div>
+        <div class="eff${c.effects.length >= 4 ? ' many' : ''}">${c.effects.map((e) => `<div>${this.effHTML(e)}</div>`).join('')}</div>
         ${c.syn ? `<div class="syn">${esc(c.syn)}</div>` : ''}
         <div class="keyhint">${i + 1}</div>
+        <div class="selmark">E · ${this.banishMode ? 'BANISH' : 'PICK'}</div>
       </div>`;
+    },
+    // an effect line with its values (+10%, -0.5s, x2, 3 -> 4) picked out in the rarity colour (.eff .v)
+    effHTML(e) {
+      return String(e).split(/([+\-−×x]?\d+(?:[.,]\d+)?(?:%|s|x)?)/).map((part, i) => (i % 2 ? `<span class="v">${esc(part)}</span>` : esc(part))).join('');
     },
     shortDesc(t) {
       const m = t.match(/^[^.!?]*[.!?]/), s = m ? m[0] : t;
@@ -216,7 +227,7 @@
       const g = G(), p = g.p;
       const html = `<div class="screen dim2 levelup">
         <div class="title">LEVEL <span class="g">UP</span></div>
-        <div class="subtitle">LV ${p.level - p.pendingLevels + 1}${p.pendingLevels > 1 ? ' · ' + p.pendingLevels + ' LEVELS PENDING' : ''} · ${this.banishMode ? '<span class="red">CLICK A CARD TO BANISH IT FOR THIS RUN</span>' : 'CHOOSE ONE'}</div>
+        <div class="subtitle">LV ${p.level - p.pendingLevels + 1}${p.pendingLevels > 1 ? ' · ' + p.pendingLevels + ' LEVELS PENDING' : ''} · ${this.banishMode ? '<span class="red">PICK A CARD TO BANISH IT FOR THIS RUN</span>' : 'CHOOSE ONE'} · <span class="keys">A / D OR ← / → TO SELECT · E TO TAKE</span></div>
         <div class="cards ${this.banishMode ? 'banish' : ''}">${this.cards.map((c, i) => this.cardHTML(c, i)).join('')}</div>
         <div class="row center">
           <button class="btn" data-act="reroll" ${p.rerolls > 0 ? '' : 'disabled'}>REROLL (${p.rerolls}) <span class="k">R</span></button>
@@ -224,6 +235,27 @@
         </div>
       </div>`;
       this.render(html, 'levelup');
+      this.sel = U.clamp(this.sel, 0, Math.max(0, this.cards.length - 1));
+      // the mouse and the keyboard share one selection: pointing at a card selects it (and drops the keyboard look)
+      ui().querySelectorAll('.levelup .card').forEach((el, i) => {
+        el.addEventListener('mousemove', () => { if (this.sel !== i || this.kbSel) { this.kbSel = false; this.setSel(i); } });
+      });
+      this.setSel(this.sel);
+    },
+    // highlight card i (no re-render: the cards keep their animations)
+    setSel(i) {
+      this.sel = i;
+      const box = ui().querySelector('.levelup .cards');
+      if (!box) return;
+      box.classList.toggle('kb', !!this.kbSel);
+      box.querySelectorAll('.card').forEach((el, j) => el.classList.toggle('sel', j === i));
+    },
+    moveSel(step) {
+      const n = this.cards.length;
+      if (!n) return;
+      this.kbSel = true;
+      this.setSel((this.sel + step + n) % n);
+      RS.Audio.sfx('hover');
     },
 
     // ------------------------------------------------------------ THE PLUG
