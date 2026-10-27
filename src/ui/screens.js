@@ -124,7 +124,11 @@
     hide() { if (this.anim) { clearInterval(this.anim); this.anim = null; } this.current = null; ui().innerHTML = ''; },
     wipe() {
       let w = document.getElementById('wipe');
-      if (!w) { w = document.createElement('div'); w.id = 'wipe'; w.innerHTML = '<i></i><i></i><i></i>'; document.body.appendChild(w); }
+      if (!w) {
+        w = document.createElement('div'); w.id = 'wipe'; w.innerHTML = '<i></i><i></i><i></i>'; document.body.appendChild(w);
+        // once the last bar is across, drop the sweep: the bars go back to hidden instead of resting at their end frame
+        w.lastChild.addEventListener('animationend', () => w.classList.remove('go'));
+      }
       w.classList.remove('go'); void w.offsetWidth; w.classList.add('go');
     },
     bind(root) {

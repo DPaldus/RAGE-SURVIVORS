@@ -45,7 +45,7 @@
       id: 'normal', name: 'NORMAL', cash: 1, diff: 1, col: '#9cff35', tagline: 'LIGHTS ON',
       desc: 'Parking Deck B2 as you know it. Baseline crowd, baseline pay. Your items hit 20% harder here.',
       hp: 1, dmg: 1, rate: 1, cap: 1, eliteGap: 1, bossHp: 0.8, dark: 0, itemPower: 1.2, labelFight: 80, labelSpd: 0.9,
-      ease: { from: 4, to: 5, hp: 0.82, rate: 0.85, cap: 0.85, dmg: 0.82, xp: 1.15 }, threat: 1,
+      ease: { from: 4, to: 5, hp: 0.92, rate: 0.85, cap: 0.85, dmg: 0.82, xp: 1.15 }, // hp 0.82 -> 0.92 (2026-10-27: one-hit kills at 5:00) threat: 1,
       push: { from: 8, to: 10, rate: 1.15, cap: 1.1 },
     },
     night: {

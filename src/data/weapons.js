@@ -310,7 +310,7 @@
     desc: 'Sprays a rapid string of digital bursts at the closest enemy. High crit chance.',
     // was dmg 5 (2026-10-26): the weakest weapon on the build bench by far, 44% of the starting GLOCK; now ~65%, it is
     // the crit build's gun (CRIT TAPE, mods)
-    base: { dmg: 8, cd: 0.95, amount: 4, speed: 820, pierce: 0, crit: 0.12, spread: 0.12, area: 1 },
+    base: { dmg: 6, cd: 0.95, amount: 4, speed: 820, pierce: 0, crit: 0.12, spread: 0.12, area: 1 }, // 8 -> 6 (2026-10-27): the bench bot faces away from its targets, so guns measured weak; an aiming player shredded the 5:00 crowd
     lv: [[{ amount: 1 }, '+1 burst'], [{ dmg: 2 }, '+2 damage'], [{ cd: -0.12 }, '-0.12s cooldown'], [{ amount: 2 }, '+2 bursts'],
       [{ pierce: 1 }, '+1 pierce'], [{ dmg: 3 }, '+3 damage'], [{ amount: 2, crit: 0.08 }, '+2 bursts, +8% crit']],
     evo: 'digital_anarchy', evoWith: 'glitch_chip',

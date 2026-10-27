@@ -34,7 +34,9 @@
     attackCap: [[0, 5], [2.5, 5], [3, 4], [8, 5], [10, 5], [20, 6], [30, 7]],
     // enemy HP multiplier; from 15:00 ~15-20% above the old curve (15: 4.9, 20: 6.8, 25: 8.8, 30: 11): with the richer
     // level-up rarity and early XP, testers without any perks walked from 10:00 to 30:00 untouched
-    hp: [[0, 1], [1, 1], [5, 1.75], [7, 2.4], [10, 3.3], [15, 5.6], [20, 8.0], [25, 10.6], [30, 13.2]],
+    // 2026-10-27: 3:00-15:00 raised (5:00 +34%, 10:00 +21%, 15:00 +11%, 30:00 +2%). Playtest: at 5:00 NORMAL a LV 5
+    // weapon with one damage MOD (15-64 a hit) killed every regular enemy (14-30 HP after NORMAL's relief) in one hit
+    hp: [[0, 1], [1, 1.05], [3, 1.55], [5, 2.35], [7, 3.0], [10, 4.0], [15, 6.2], [20, 8.4], [25, 10.9], [30, 13.4]],
     tier1: [[0, 0], [3.5, 0], [8, 0.8], [30, 0.8]], // share of tier-1 variants (x2.2 HP, faster, more XP)
     tier2: [[0, 0], [9, 0], [15, 0.45], [22, 0.75], [30, 0.85]], // share of tier-2 variants (x5 HP)
     waveGap: [[0, 36], [3, 32], [10, 28], [20, 24], [30, 20]], // seconds between formations
@@ -44,7 +46,8 @@
     // build was too thin), from 15:00 it is the old rate again (a flat boost let late builds snowball into easy wins)
     // 2026-10-27: from 14:00 it keeps falling, to 0.62 at 30:00 (NORMAL with all perks reached LV 98 at 30:00; bot runs
     // now end around LV 75-86). Until 14:00 unchanged: a thinner mid-run build ended STORM test runs at 11-13:00
-    xp: [[0, 1.45], [6, 1.45], [10, 1.15], [14, 1], [20, 0.78], [30, 0.62]],
+    // 2026-10-27: 1.45 -> 1.3 until 6:00 (LV ~20 at 5:00 put most weapons near their max level before the first boss)
+    xp: [[0, 1.3], [6, 1.3], [10, 1.12], [14, 1], [20, 0.78], [30, 0.62]],
     // how many regular enemy types share the map at once (the director's lineup rotates every 60-80 s; it used to be
     // every type unlocked so far: 10 at 5:00, 13 from 7:30)
     types: [[0, 2], [1, 3], [2.5, 4], [12, 4], [18, 5], [30, 5]],
